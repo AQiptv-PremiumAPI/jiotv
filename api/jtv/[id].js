@@ -4,7 +4,8 @@ export default async function handler(req, res) {
 
   try {
     // Fetch source M3U
-    const m3u = await fetch("https://jiotvplaylist.teachub.workers.dev/").then(r => r.text());
+    const m3u = await fetch("https://jiotvplaylist.teachub.workers.dev/")
+      .then(r => r.text());
 
     // Find block by tvg-id
     const block = m3u.split("#EXTINF:").find(b => b.includes(`tvg-id="${id}"`));
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
     // ---- MPD ----
     if (url.includes("/mpd/")) {
       const mpd = lines.reverse().find(x => x.startsWith("http"));
+      if (!mpd) return res.status(404).send("MPD Not Found");
       return res.redirect(mpd);
     }
 
@@ -22,12 +24,14 @@ export default async function handler(req, res) {
     if (url.includes("/key/")) {
       const key = lines.find(x => x.includes("license_key="))
         ?.split("license_key=")[1];
+      if (!key) return res.status(404).send("Key Not Found");
       return res.send(key);
     }
 
+    // Default
     res.send("Use /mpd/ID or /key/ID");
 
   } catch (e) {
-    res.status(500).send("Error");
+    res.status(500).send("Error: " + e.message);
   }
 }
