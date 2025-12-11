@@ -1,6 +1,6 @@
 {
   "rewrites": [
     { "source": "/jibo/mpd/:id", "destination": "/api/jio/:id" },
-    { "source": "/jio/:type(key|mpd)_:id", "destination": "/api/jtv/:type(key|mpd)/:id" }
+    { "source": "/jio/:type(key|mpd)/:id", "destination": "/api/jtv/:type(key|mpd)/:id" }
   ]
 }
