@@ -24,7 +24,7 @@ export default async function handler(req, res) {
       const key = lines.find(x => x.includes("license_key="))
         ?.split("license_key=")[1];
       if (!key) return res.status(404).send("Key Not Found");
-      return res.send(key);
+      return res.redirect(key);
     }
 
     res.send("Use mpd or key");
