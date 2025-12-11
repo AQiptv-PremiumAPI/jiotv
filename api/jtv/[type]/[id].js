@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const { type, id } = req.query;   // type = mpd | key
+  const { type, id } = req.query; // type = mpd | key
 
   try {
     // Fetch playlist
@@ -19,15 +19,39 @@ export default async function handler(req, res) {
       return res.redirect(mpd);
     }
 
-    // ---------- KEY ----------
+    // ---------- KEY (JSON format) ----------
     if (type === "key") {
-      const key = lines.find(x => x.includes("license_key="))
+      const raw = lines.find(x => x.includes("license_key="))
         ?.split("license_key=")[1];
-      if (!key) return res.status(404).send("Key Not Found");
-      return res.redirect(key);
+
+      if (!raw) return res.status(404).send("Key Not Found");
+
+      // raw format = KID:KEY  (hex)
+      const [kidHex, keyHex] = raw.split(":");
+
+      if (!kidHex || !keyHex)
+        return res.status(400).send("Invalid key format");
+
+      // Convert Hex → Base64
+      const hexToBase64 = (hex) =>
+        Buffer.from(hex.replace(/[^0-9a-f]/gi, ""), "hex").toString("base64");
+
+      const jsonKeyFormat = {
+        keys: [
+          {
+            kty: "oct",
+            k: hexToBase64(keyHex),
+            kid: hexToBase64(kidHex)
+          }
+        ],
+        type: "temporary"
+      };
+
+      res.setHeader("Content-Type", "application/json");
+      return res.send(JSON.stringify(jsonKeyFormat));
     }
 
-    res.send("Use mpd or key");
+    res.send("Use /mpd/ID or /key/ID");
 
   } catch (e) {
     res.status(500).send("Error: " + e.message);
