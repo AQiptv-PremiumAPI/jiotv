@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/jio/mpd/:id", "destination": "/api/jio/:id" },
+  ]
+}
