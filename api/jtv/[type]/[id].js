@@ -33,7 +33,6 @@ export default async function handler(req, res) {
           .toString("base64")
           .replace(/=/g, "")
           .replace(/\+/g, "_")
-          .replace(/\//g, "-");
 
       const result = {
         keys: [
