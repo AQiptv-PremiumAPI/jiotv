@@ -1,63 +1,49 @@
-export const config = {
-  runtime: "nodejs",
-};
 
 export default async function handler(req, res) {
+  const { id } = req.query;
+
   try {
-    const { id } = req.query;
-    if (!id) return res.status(400).send("Missing id");
-
-    const m3uRes = await fetch(
+    const m3u = await fetch(
       "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/z5.m3u"
-    );
-
-    if (!m3uRes.ok) {
-      return res.status(500).send("Failed to fetch M3U");
-    }
-
-    const m3u = await m3uRes.text();
+    ).then(r => r.text());
 
     const block = m3u
       .split("#EXTINF:")
-      .find(b => b.includes(`tvg-id="${id}"`));
+      .find(p => p.includes(`tvg-id="${id}"`));
 
     if (!block) {
       return res.status(404).send("Channel Not Found");
     }
 
-    const streamUrl = block
-      .split("\n")
-      .map(l => l.trim())
-      .find(l => l.startsWith("http"));
+    const lines = block.trim().split("\n").map(l => l.trim());
+    const streamUrl = lines.reverse().find(l => l.startsWith("http"));
 
     if (!streamUrl) {
       return res.status(404).send("Stream URL Not Found");
     }
 
-    const streamRes = await fetch(streamUrl, {
+    // 🔥 Fetch stream WITH User-Agent
+    const streamResponse = await fetch(streamUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        Referer: "https://www.zee5.com/",
-        Origin: "https://www.zee5.com",
       },
     });
 
-    if (!streamRes.ok) {
-      return res.status(502).send("Stream fetch failed");
+    if (!streamResponse.ok) {
+      return res.status(502).send("Upstream Stream Error");
     }
 
-    res.setHeader(
-      "Content-Type",
-      streamRes.headers.get("content-type") ||
-        "application/vnd.apple.mpegurl"
-    );
+    // 🔥 Important headers for streaming
+    res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
+    res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cache-Control", "no-store");
 
-    streamRes.body.pipe(res);
+    // 🔥 Pipe stream to client
+    streamResponse.body.pipe(res);
+
   } catch (err) {
     console.error(err);
-    res.status(500).send("Internal Error");
+    res.status(500).send("Error fetching data");
   }
 }
