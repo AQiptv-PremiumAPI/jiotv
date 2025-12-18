@@ -3,7 +3,7 @@ export default async function handler(req, res) {
 
   try {
     // Fetch M3U file
-    const m3u = await fetch("https://jiotvplaylist.teachub.workers.dev/").then(r => r.text());
+    const m3u = await fetch("https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/z5.m3u").then(r => r.text());
 
     // Extract block by tvg-id
     const block = m3u.split("#EXTINF:").find(p => p.includes(`tvg-id="${id}"`));
