@@ -32,6 +32,7 @@ export default async function handler(req, res) {
         Buffer.from(hex.replace(/[^0-9a-f]/gi, ""), "hex")
           .toString("base64")
           .replace(/=/g, "")
+          .replace(/\+/g, "-")
 
       const result = {
         keys: [
